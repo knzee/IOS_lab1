@@ -11,7 +11,7 @@ import UIKit
 class ViewController: UIViewController {
     
     var t : Timer?
-    
+    var gameState: GameState = GameState()
     var enemies = [[Enemy]]()
     var aliveEnemies = 15
     
@@ -25,7 +25,8 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var LeftB: UIButton!
     
-    @IBOutlet weak var player: Player!
+
+    @IBOutlet weak var playerImageView: UIImageView!
     @IBOutlet weak var DeathScreen: UILabel!
     
     @IBOutlet weak var bestScoreSV: UIStackView!
@@ -46,32 +47,26 @@ class ViewController: UIViewController {
     //Controls
     //-------------
     @IBAction func LBTouchDown(_ sender: UIButton) {
-        player.direction = -1
+        gameState.direction = -1
     }
     @IBAction func LBTouchUp(_ sender: UIButton) {
-        player.direction = 0
+        gameState.direction = 0
     }
     @IBAction func RBTouchDown(_ sender: UIButton) {
-        player.direction = 1
+        gameState.direction = 1
     }
     @IBAction func RBTouchUp(_ sender: UIButton) {
-        player.direction = 0
+        gameState.direction = 0
     }
     //--------------
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        /*let backgroundImage = UIImageView(frame: UIScreen.main.bounds)
-         backgroundImage.image = #imageLiteral(resourceName: "space-invader-enemy-1-512")
-         backgroundImage.contentMode = UIView.ContentMode.scaleAspectFill
-         self.view.insertSubview(backgroundImage, at: 0)*/
-        
-        playerAttackCD = player.fireRate
+        playerAttackCD = gameState.fireRate
         
         let playerFrame = CGRect(x: view.frame.width * 0.4 , y: view.frame.height - 0.2 * view.frame.width - (1/11) * view.frame.width, width: 0.2 * view.frame.width , height:  0.2 * view.frame.width)
         
-        player.frame = playerFrame
+        playerImageView.frame = playerFrame
         
         setUpEnemies()
         
@@ -80,13 +75,13 @@ class ViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        player.saveManager.load()
+        gameState.load()
         restart()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        player.saveManager.saveLevel()
+        gameState.saveLevel()
     }
     
     func setUpEnemies() {
@@ -106,7 +101,7 @@ class ViewController: UIViewController {
     
     
     @IBAction func onTap(_ sender: UITapGestureRecognizer) {
-        if player.isDead {
+        if gameState.isDead {
             DeathScreen.isHidden = true
             bestScoreSV.isHidden = true
             
@@ -115,11 +110,11 @@ class ViewController: UIViewController {
     }
     
     func restart() {
-        player.resurrect()
-        enemyAttackCD = Double(50*pow(0.8, Double(player.saveManager.level)))
-        hp.text = String(player.health)
-        score.text = String(player.saveManager.score)
-        level.text = String(player.saveManager.level)
+        gameState.resurrect()
+        enemyAttackCD = Double(50*pow(0.8, Double(gameState.level)))
+        hp.text = String(gameState.health)
+        score.text = String(gameState.score)
+        level.text = String(gameState.level)
         
         for i in 0...4 {
             for j in 0...2 {
@@ -144,10 +139,10 @@ class ViewController: UIViewController {
         playerAttackCD += 1
         attack()
         
-        let ms = player.calcMS()
-        if (player.frame.origin.x + ms) > 5 &&
-            (player.frame.origin.x + ms < (view.frame.maxX-player.frame.width-5)) {
-            player.frame.origin.x += ms
+        let ms = gameState.calcMS()
+        if (playerImageView.frame.origin.x + ms) > 5 &&
+            (playerImageView.frame.origin.x + ms < (view.frame.maxX-playerImageView.frame.width-5)) {
+            playerImageView.frame.origin.x += ms
         }
         
         checkForDeath()
@@ -157,7 +152,7 @@ class ViewController: UIViewController {
     
     func checkForDeath() {
         
-        if enemies[0][2].frame.origin.y + enemies[0][2].frame.height > player.frame.origin.y {
+        if enemies[0][2].frame.origin.y + enemies[0][2].frame.height > playerImageView.frame.origin.y {
             die()
         }
         
@@ -167,13 +162,13 @@ class ViewController: UIViewController {
                 enemyBullets[number].removeFromSuperview()
                 enemyBullets.remove(at: number)
             }
-            if (item.frame.origin.y - player.frame.height*0.3 > player.frame.origin.y){
-                if (item.frame.intersects(player.frame)) {
+            if (item.frame.origin.y - playerImageView.frame.height*0.3 > playerImageView.frame.origin.y){
+                if (item.frame.intersects(playerImageView.frame)) {
                     enemyBullets[number].removeFromSuperview()
                     enemyBullets.remove(at: number)
-                    player.health-=1
-                    hp.text = String(player.health)
-                    if (player.health==0) {
+                    gameState.health-=1
+                    hp.text = String(gameState.health)
+                    if (gameState.health==0) {
                         die()
                     }
                     
@@ -184,17 +179,17 @@ class ViewController: UIViewController {
     }
     
     func die() {
-        player.die()
+        gameState.die()
         aliveEnemies = 15
-        best_score.text = String(player.saveManager.bestScore)
+        best_score.text = String(gameState.bestScore)
         bestScoreSV.isHidden = false
         DeathScreen.isHidden = false
         t?.invalidate()
     }
     
     func attack() {
-        if playerAttackCD > player.fireRate {
-            let myView = CGRect(x: player.frame.origin.x + player.frame.width * 0.45, y: player.frame.origin.y-player.frame.height * 0.3, width: player.frame.width * 0.1, height: player.frame.height * 0.5)
+        if playerAttackCD > gameState.fireRate {
+            let myView = CGRect(x: playerImageView.frame.origin.x + playerImageView.frame.width * 0.45, y: playerImageView.frame.origin.y-playerImageView.frame.height * 0.3, width: playerImageView.frame.width * 0.1, height: playerImageView.frame.height * 0.5)
             let newPlayerBullet = UIImageView(frame: myView)
             newPlayerBullet.image = #imageLiteral(resourceName: "220-2205494_space-invaders-ship-clipart")
             view.addSubview(newPlayerBullet)
@@ -217,14 +212,14 @@ class ViewController: UIViewController {
                                 playerBullets[number].removeFromSuperview()
                                 playerBullets.remove(at: number)
                                 enemies[i][j].isHidden = true
-                                player.saveManager.score += player.saveManager.level
-                                score.text = String(player.saveManager.score)
+                                gameState.score += gameState.level
+                                score.text = String(gameState.score)
                                 aliveEnemies -= 1
                                 
                                 if aliveEnemies == 0 {
                                     t?.invalidate()
-                                    player.saveManager.level += 1
-                                    player.saveManager.save()
+                                    gameState.level += 1
+                                    gameState.save()
                                     restart()
                                     break outer
                                 }

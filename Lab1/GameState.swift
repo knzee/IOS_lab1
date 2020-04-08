@@ -9,7 +9,7 @@
 import Foundation
 import UIKit
 
-class Player:UIImageView {
+class GameState{
     var fireRate = 30
     var health = 5
     var bestScore = 0
@@ -28,6 +28,7 @@ class Player:UIImageView {
         UserDefaults.standard.set(score, forKey: "score")
         UserDefaults.standard.set(level, forKey: "level")
     }
+    
     func saveLevel() {
         UserDefaults.standard.set(level, forKey: "level")
     }
